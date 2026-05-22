@@ -15,8 +15,10 @@ import (
 	"github.com/RomanKovalev007/organization_service/internal/service"
 	"github.com/RomanKovalev007/organization_service/internal/transport"
 	"github.com/RomanKovalev007/organization_service/internal/transport/handler"
+	"github.com/RomanKovalev007/organization_service/migrations"
 	"github.com/RomanKovalev007/organization_service/pkg/logger"
 	"github.com/RomanKovalev007/organization_service/pkg/postgres"
+	"github.com/pressly/goose/v3"
 )
 
 func main() {
@@ -38,6 +40,22 @@ func main() {
 		slog.Error("connect to postgres", "err", err)
 		os.Exit(1)
 	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		slog.Error("get sql.DB", "err", err)
+		os.Exit(1)
+	}
+	goose.SetBaseFS(migrations.FS)
+	if err := goose.SetDialect("postgres"); err != nil {
+		slog.Error("goose set dialect", "err", err)
+		os.Exit(1)
+	}
+	if err := goose.Up(sqlDB, "."); err != nil {
+		slog.Error("goose up", "err", err)
+		os.Exit(1)
+	}
+	slog.Info("migrations applied")
 
 	deptRepo := repository.NewDepartmentRepo(db)
 	empRepo := repository.NewEmployeeRepo(db)
