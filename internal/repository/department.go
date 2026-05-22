@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/RomanKovalev007/organization_service/internal/apperr"
 	"github.com/RomanKovalev007/organization_service/internal/domain"
 	"gorm.io/gorm"
 )
@@ -55,7 +56,7 @@ func (r *DepartmentRepo) Update(ctx context.Context, id int64, updates map[strin
 		return nil, fmt.Errorf("update department: %w", wrapDBError(res.Error))
 	}
 	if res.RowsAffected == 0 {
-		return nil, ErrNotFound
+		return nil, apperr.ErrNotFound
 	}
 	return r.GetByID(ctx, id)
 }
@@ -66,7 +67,7 @@ func (r *DepartmentRepo) Delete(ctx context.Context, id int64) error {
 		return fmt.Errorf("delete department: %w", wrapDBError(res.Error))
 	}
 	if res.RowsAffected == 0 {
-		return ErrNotFound
+		return apperr.ErrNotFound
 	}
 	return nil
 }
