@@ -20,6 +20,6 @@ type Employee struct {
 
 type DepartmentTree struct {
 	Department
-	Employees []Employee
-	Children  []*DepartmentTree
+	Employees []Employee        `json:"employees,omitempty"`
+	Children  []*DepartmentTree `json:"children,omitempty"`
 }
