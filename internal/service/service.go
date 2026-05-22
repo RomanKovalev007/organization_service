@@ -57,13 +57,6 @@ func (s *Service) CreateEmployee(ctx context.Context, emp *domain.Employee) (*do
 }
 
 func (s *Service) GetDepartment(ctx context.Context, id int64, depth int, includeEmployees bool) (*domain.DepartmentTree, error) {
-	if depth < 1 {
-		depth = 1
-	}
-	if depth > 5 {
-		depth = 5
-	}
-
 	dept, err := s.deptRepo.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, apperr.ErrNotFound) {
@@ -76,14 +69,6 @@ func (s *Service) GetDepartment(ctx context.Context, id int64, depth int, includ
 }
 
 func (s *Service) UpdateDepartment(ctx context.Context, id int64, name *string, parentID *int64) (*domain.Department, error) {
-	_, err := s.deptRepo.GetByID(ctx, id)
-	if err != nil {
-		if errors.Is(err, apperr.ErrNotFound) {
-			return nil, apperr.New(apperr.CodeNotFound, "department not found")
-		}
-		return nil, apperr.New(apperr.CodeInternalError, err.Error())
-	}
-
 	if parentID != nil {
 		if *parentID == id {
 			return nil, apperr.New(apperr.CodeInvalidInput, "department cannot be its own parent")
@@ -161,16 +146,15 @@ func (s *Service) DeleteDepartment(ctx context.Context, id int64, mode DeleteMod
 			return apperr.New(apperr.CodeInternalError, err.Error())
 		}
 
-		isDesc, err := s.deptRepo.IsDescendant(ctx, id, *reassignTo)
-		if err != nil {
-			return apperr.New(apperr.CodeInternalError, err.Error())
-		}
-		if isDesc {
-			return apperr.New(apperr.CodeInvalidInput, "reassign target is inside the subtree of the department being deleted")
-		}
-
 		if err := s.txRunner.RunInTx(ctx,
 			func(deptRepo DepartmentRepo, empRepo EmployeeRepo) error {
+				isDesc, err := deptRepo.IsDescendant(ctx, id, *reassignTo)
+				if err != nil {
+					return fmt.Errorf("is descendant: %w", err)
+				}
+				if isDesc {
+					return apperr.New(apperr.CodeInvalidInput, "reassign target is inside the subtree of the department being deleted")
+				}
 				if err := empRepo.ReassignAll(ctx, id, *reassignTo); err != nil {
 					return fmt.Errorf("reassign employees: %w", err)
 				}
@@ -182,6 +166,9 @@ func (s *Service) DeleteDepartment(ctx context.Context, id int64, mode DeleteMod
 				}
 				return nil
 			}); err != nil {
+			if errors.As(err, new(*apperr.Error)) {
+				return err
+			}
 			return apperr.New(apperr.CodeInternalError, err.Error())
 		}
 
