@@ -15,5 +15,5 @@ func NewRouter(h *handler.Handler) http.Handler {
 	mux.HandleFunc("PATCH /departments/{id}", h.UpdateDepartment)
 	mux.HandleFunc("DELETE /departments/{id}", h.DeleteDepartment)
 
-	return mux
+	return loggingMiddleware(mux)
 }

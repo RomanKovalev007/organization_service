@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/RomanKovalev007/organization_service/internal/apperr"
 	"github.com/RomanKovalev007/organization_service/internal/domain"
@@ -41,18 +42,19 @@ func (s *Service) CreateDepartment(ctx context.Context, dept *domain.Department)
         }
         return nil, apperr.New(apperr.CodeInternalError, err.Error())
     }
+    slog.Info("department created", "id", resDept.ID, "name", resDept.Name)
     return resDept, nil
 }
-
 
 func (s *Service) CreateEmployee(ctx context.Context, emp *domain.Employee) (*domain.Employee, error) {
 	res, err := s.empRepo.Create(ctx, emp)
 	if err != nil {
-        if errors.Is(err, apperr.ErrNotFound) {
-            return nil, apperr.New(apperr.CodeNotFound, "department not found")
-        }
-        return nil, apperr.New(apperr.CodeInternalError, err.Error())
+		if errors.Is(err, apperr.ErrNotFound) {
+			return nil, apperr.New(apperr.CodeNotFound, "department not found")
+		}
+		return nil, apperr.New(apperr.CodeInternalError, err.Error())
 	}
+	slog.Info("employee created", "id", res.ID, "department_id", res.DepartmentID)
 	return res, nil
 }
 
@@ -112,6 +114,7 @@ func (s *Service) UpdateDepartment(ctx context.Context, id int64, name *string, 
 		}
 		return nil, apperr.New(apperr.CodeInternalError, err.Error())
 	}
+	slog.Info("department updated", "id", res.ID)
 	return res, nil
 }
 
@@ -129,6 +132,7 @@ func (s *Service) DeleteDepartment(ctx context.Context, id int64, mode DeleteMod
 		if err := s.deptRepo.Delete(ctx, id); err != nil {
 			return apperr.New(apperr.CodeInternalError, err.Error())
 		}
+		slog.Info("department deleted", "id", id, "mode", "cascade")
 
 	case DeleteModeReassign:
 		if reassignTo == nil {
@@ -171,6 +175,7 @@ func (s *Service) DeleteDepartment(ctx context.Context, id int64, mode DeleteMod
 			}
 			return apperr.New(apperr.CodeInternalError, err.Error())
 		}
+		slog.Info("department deleted", "id", id, "mode", "reassign", "reassign_to", *reassignTo)
 
 	default:
 		return apperr.New(apperr.CodeInvalidInput, "mode must be 'cascade' or 'reassign'")

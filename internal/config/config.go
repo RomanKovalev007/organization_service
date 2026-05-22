@@ -8,8 +8,13 @@ import (
 )
 
 type Config struct {
+	Log  Log
 	HTTP HTTP
 	DB   DB
+}
+
+type Log struct {
+	Level string `env:"LOG_LEVEL" env-default:"info"`
 }
 
 type HTTP struct {
