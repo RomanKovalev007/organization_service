@@ -9,15 +9,14 @@ const (
 	CodeInvalidInput  = "INVALID_INPUT"
 )
 
-// Sentinel ошибки для проверки через errors.Is на уровне сервиса и хэндлера.
 var (
 	ErrNotFound      = errors.New("not found")
 	ErrAlreadyExists = errors.New("already exists")
 )
 
 type Error struct {
-	Code    string
-	Message string
+	Code    string `json:"code"`
+	Message string `json:"message"`
 }
 
 func (e *Error) Error() string {
