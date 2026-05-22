@@ -17,3 +17,9 @@ type Employee struct {
 	HiredAt      *time.Time `gorm:"column:hired_at"                   json:"hired_at,omitempty"`
 	CreatedAt    time.Time  `gorm:"column:created_at;autoCreateTime"  json:"created_at"`
 }
+
+type DepartmentTree struct {
+	Department
+	Employees []Employee
+	Children  []*DepartmentTree
+}

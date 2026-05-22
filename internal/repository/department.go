@@ -38,8 +38,8 @@ func (r *DepartmentRepo) GetByID(ctx context.Context, id int64) (*domain.Departm
 	return &dept, nil
 }
 
-func (r *DepartmentRepo) GetChildren(ctx context.Context, parentID int64) ([]domain.Department, error) {
-	var depts []domain.Department
+func (r *DepartmentRepo) GetChildren(ctx context.Context, parentID int64) ([]*domain.Department, error) {
+	var depts []*domain.Department
 	res := r.db.WithContext(ctx).Where("parent_id = ?", parentID).Find(&depts)
 	if res.Error != nil {
 		return nil, fmt.Errorf("get children: %w", wrapDBError(res.Error))
@@ -68,6 +68,17 @@ func (r *DepartmentRepo) Delete(ctx context.Context, id int64) error {
 	}
 	if res.RowsAffected == 0 {
 		return apperr.ErrNotFound
+	}
+	return nil
+}
+
+func (r *DepartmentRepo) ReparentChildren(ctx context.Context, fromParentID, toParentID int64) error {
+	res := r.db.WithContext(ctx).
+		Model(&domain.Department{}).
+		Where("parent_id = ?", fromParentID).
+		Update("parent_id", toParentID)
+	if res.Error != nil {
+		return fmt.Errorf("reparent children: %w", wrapDBError(res.Error))
 	}
 	return nil
 }
