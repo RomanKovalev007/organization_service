@@ -130,6 +130,9 @@ func (s *Service) DeleteDepartment(ctx context.Context, id int64, mode DeleteMod
 	switch mode {
 	case DeleteModeCascade:
 		if err := s.deptRepo.Delete(ctx, id); err != nil {
+			if errors.Is(err, apperr.ErrNotFound) {
+				return apperr.New(apperr.CodeNotFound, "department not found")
+			}
 			return apperr.New(apperr.CodeInternalError, err.Error())
 		}
 		slog.Info("department deleted", "id", id, "mode", "cascade")
