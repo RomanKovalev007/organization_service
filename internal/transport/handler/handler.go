@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
+	"unicode/utf8"
 
 	"github.com/RomanKovalev007/organization_service/internal/apperr"
 	"github.com/RomanKovalev007/organization_service/internal/domain"
@@ -31,7 +33,7 @@ func (h *Handler) CreateDepartment(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, apperr.CodeInvalidInput, "name is required")
 		return
 	}
-	if len(req.Name) > 200 {
+	if utf8.RuneCountInString(req.Name) > 200 {
 		writeError(w, http.StatusBadRequest, apperr.CodeInvalidInput, "name must be at most 200 characters")
 		return
 	}
@@ -67,7 +69,7 @@ func (h *Handler) CreateEmployee(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, apperr.CodeInvalidInput, "full_name is required")
 		return
 	}
-	if len(req.FullName) > 200 {
+	if utf8.RuneCountInString(req.FullName) > 200 {
 		writeError(w, http.StatusBadRequest, apperr.CodeInvalidInput, "full_name must be at most 200 characters")
 		return
 	}
@@ -75,16 +77,26 @@ func (h *Handler) CreateEmployee(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, apperr.CodeInvalidInput, "position is required")
 		return
 	}
-	if len(req.Position) > 200 {
+	if utf8.RuneCountInString(req.Position) > 200 {
 		writeError(w, http.StatusBadRequest, apperr.CodeInvalidInput, "position must be at most 200 characters")
 		return
+	}
+
+	var hiredAt *time.Time
+	if req.HiredAt != nil {
+		t, err := time.Parse("2006-01-02", *req.HiredAt)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, apperr.CodeInvalidInput, "hired_at must be in YYYY-MM-DD format")
+			return
+		}
+		hiredAt = &t
 	}
 
 	emp, err := h.svc.CreateEmployee(r.Context(), &domain.Employee{
 		DepartmentID: id,
 		FullName:     req.FullName,
 		Position:     req.Position,
-		HiredAt:      req.HiredAt,
+		HiredAt:      hiredAt,
 	})
 	if err != nil {
 		handleAppErr(w, err)
@@ -139,7 +151,7 @@ func (h *Handler) UpdateDepartment(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, apperr.CodeInvalidInput, "name cannot be empty")
 			return
 		}
-		if len(trimmed) > 200 {
+		if utf8.RuneCountInString(trimmed) > 200 {
 			writeError(w, http.StatusBadRequest, apperr.CodeInvalidInput, "name must be at most 200 characters")
 			return
 		}
