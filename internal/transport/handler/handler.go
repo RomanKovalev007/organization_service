@@ -109,7 +109,7 @@ func (h *Handler) GetDepartment(w http.ResponseWriter, r *http.Request) {
 		}
 		depth = parsed
 	}
-	includeEmployees := r.URL.Query().Get("include_employees") == "true"
+	includeEmployees := r.URL.Query().Get("include_employees") != "false"
 
 	tree, err := h.svc.GetDepartment(r.Context(), id, depth, includeEmployees)
 	if err != nil {

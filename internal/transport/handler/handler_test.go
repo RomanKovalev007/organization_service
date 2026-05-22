@@ -158,6 +158,32 @@ func TestGetDepartment_Success(t *testing.T) {
 	assert.Equal(t, int64(1), resp.ID)
 }
 
+func TestGetDepartment_IncludeEmployees_DefaultTrue(t *testing.T) {
+	var capturedInclude bool
+	svc := &mockSvc{
+		GetDepartmentFn: func(_ context.Context, _ int64, _ int, includeEmployees bool) (*domain.DepartmentTree, error) {
+			capturedInclude = includeEmployees
+			return &domain.DepartmentTree{Department: domain.Department{ID: 1}}, nil
+		},
+	}
+	rec := do(t, newTestMux(svc), http.MethodGet, "/departments/1", nil)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.True(t, capturedInclude)
+}
+
+func TestGetDepartment_IncludeEmployees_ExplicitFalse(t *testing.T) {
+	var capturedInclude bool
+	svc := &mockSvc{
+		GetDepartmentFn: func(_ context.Context, _ int64, _ int, includeEmployees bool) (*domain.DepartmentTree, error) {
+			capturedInclude = includeEmployees
+			return &domain.DepartmentTree{Department: domain.Department{ID: 1}}, nil
+		},
+	}
+	rec := do(t, newTestMux(svc), http.MethodGet, "/departments/1?include_employees=false", nil)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.False(t, capturedInclude)
+}
+
 func TestGetDepartment_InvalidID(t *testing.T) {
 	rec := do(t, newTestMux(&mockSvc{}), http.MethodGet, "/departments/abc", nil)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
